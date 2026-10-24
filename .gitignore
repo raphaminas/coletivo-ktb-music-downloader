@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# DJ Downloader Data & Cache
+backend/data/dj.sqlite3*
+backend/data/tmp/
+
+# OS
+.DS_Store
+Thumbs.db
