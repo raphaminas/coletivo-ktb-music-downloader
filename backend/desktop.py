@@ -23,9 +23,22 @@ def ensure_binaries_in_path() -> None:
             candidates.extend([meipass, meipass / "bin"])
         exe_dir = Path(sys.executable).parent
         candidates.extend([exe_dir, exe_dir / "bin"])
+        # No macOS .app bundle
+        bundle_contents = exe_dir.parent
+        candidates.extend([
+            bundle_contents / "Resources" / "bin",
+            bundle_contents / "MacOS" / "bin",
+            bundle_contents / "Frameworks" / "bin",
+        ])
     else:
         root = Path(__file__).resolve().parent.parent
-        candidates.extend([root / "bin", root / "windows" / "bin"])
+        candidates.extend([
+            root / "bin",
+            root / "windows" / "bin",
+            root / "macos" / "bin",
+            Path("/opt/homebrew/bin"),
+            Path("/usr/local/bin"),
+        ])
 
     for c in candidates:
         if c.is_dir() and str(c) not in os.environ.get("PATH", ""):
