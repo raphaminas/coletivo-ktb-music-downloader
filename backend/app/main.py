@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import asyncio
 import io
+import os
 import re
 import shutil
 import subprocess
+import sys
 import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -305,6 +307,16 @@ async def delete_project(pid: str) -> dict:
     return {"ok": True}
 
 
+def open_folder(path: Path) -> None:
+    p = path.resolve()
+    if sys.platform == "win32":
+        os.startfile(str(p))
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", str(p)])
+    else:
+        subprocess.Popen(["xdg-open", str(p)])
+
+
 @app.post("/api/projects/{pid}/reveal")
 async def reveal(pid: str) -> dict:
     p = db.get_project_meta(pid)
@@ -312,7 +324,7 @@ async def reveal(pid: str) -> dict:
         raise HTTPException(404)
     folder = Path(db.get_settings()["output_dir"]).expanduser() / sanitize(p["name"])
     folder.mkdir(parents=True, exist_ok=True)
-    subprocess.Popen(["open", str(folder)])
+    open_folder(folder)
     return {"ok": True, "path": str(folder)}
 
 
@@ -553,7 +565,17 @@ async def check_premium() -> dict:
 
 # ---------- frontend estático (SPA fallback) ----------
 
-FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+def get_frontend_dist() -> Path:
+    if getattr(sys, "frozen", False):
+        base_dir = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+        candidate = base_dir / "frontend" / "dist"
+        if candidate.exists():
+            return candidate
+        return base_dir / "dist"
+    return Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+
+FRONTEND_DIST = get_frontend_dist()
 if FRONTEND_DIST.exists():
     from fastapi.staticfiles import StaticFiles
 

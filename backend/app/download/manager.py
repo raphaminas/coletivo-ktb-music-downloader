@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Awaitable, Callable
@@ -15,7 +17,16 @@ import yt_dlp
 from .. import db
 from ..tagging import write_tags
 
-CHROME_DIR = Path.home() / "Library" / "Application Support" / "Google" / "Chrome"
+def get_chrome_dir() -> Path:
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+        return Path(base) / "Google" / "Chrome" / "User Data"
+    elif sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Google" / "Chrome"
+    else:
+        return Path.home() / ".config" / "google-chrome"
+
+CHROME_DIR = get_chrome_dir()
 # itag 141 = AAC 256kbps (Premium); 140 = AAC 128; depois o melhor áudio disponível.
 FORMAT_SELECTOR = "141/bestaudio[acodec^=mp4a]/bestaudio/best"
 EXT = {"mp3": "mp3", "wav": "wav", "m4a": "m4a"}

@@ -9,8 +9,27 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+import os
+import sys
+
+def get_data_dir() -> Path:
+    custom = os.environ.get("DJ_DATA_DIR")
+    if custom:
+        d = Path(custom)
+    elif getattr(sys, "frozen", False):
+        if sys.platform == "win32":
+            base = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
+            d = Path(base) / "DJ Downloader"
+        elif sys.platform == "darwin":
+            d = Path.home() / "Library" / "Application Support" / "DJ Downloader"
+        else:
+            d = Path.home() / ".config" / "dj-downloader"
+    else:
+        d = Path(__file__).resolve().parent.parent / "data"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+DATA_DIR = get_data_dir()
 DB_PATH = DATA_DIR / "dj.sqlite3"
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -18,8 +37,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "format": "mp3",
     "output_dir": str(Path.home() / "Music" / "DJ Downloader"),
     "cookies_browser": "chrome",  # "" para desativar
-    # Nome do perfil do Chrome (como aparece no Chrome) ou a pasta (ex.: "Profile 1").
-    "cookies_profile": "raphael",
+    # Nome do perfil do Chrome (ex.: "Profile 1", "Default") ou "" para o perfil principal
+    "cookies_profile": "",
     "filename_pattern": "{artist} - {title}",
     "min_bitrate": 192,
     "concurrency": 2,
